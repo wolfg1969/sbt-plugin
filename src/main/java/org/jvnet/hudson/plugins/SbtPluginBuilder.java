@@ -169,7 +169,8 @@ public class SbtPluginBuilder extends Builder {
         if (sbt == null) {
             throw new IllegalArgumentException("sbt-launch.jar not found");
         } else {
-            sbt = sbt.forNode(Computer.currentComputer().getNode(), listener);
+            Node currentNode = Computer.currentComputer().getNode();
+            sbt = sbt.forNode(currentNode, listener);
             sbt = sbt.forEnvironment(env);
 
             String launcherPath = sbt.getSbtLaunchJar(launcher);
@@ -183,21 +184,17 @@ public class SbtPluginBuilder extends Builder {
             }
 
             // java
-            String javaExePath;
+            String javaExePath = (File.separatorChar == '\\') ? "java.exe" : "java";
 
             JDK jdk = build.getProject().getJDK();
-            Computer computer = Computer.currentComputer();
-            if (computer != null && jdk != null) { // just in case were not in a build
+            if (jdk != null) { // just in case were not in a build
                 // use node specific installers, etc
-                jdk = jdk.forNode(computer.getNode(), listener);
+                jdk = jdk.forNode(currentNode, listener);
+                jdk = jdk.forEnvironment(env);
+
+                javaExePath = jdk.getBinDir() + "/" + javaExePath;
             }
 
-            if (jdk != null) {
-                javaExePath = new File(jdk.getBinDir()
-                    + "/java").getAbsolutePath();
-            } else {
-                javaExePath = "java";
-            }
             args.add(javaExePath);
 
             splitAndAddArgs(jvmFlags, args);
